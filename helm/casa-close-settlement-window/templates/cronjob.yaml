@@ -1,0 +1,26 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ template "casa-close-settlement-window.fullname" . }}
+spec:
+  schedule: "{{ .Values.schedule }}"
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: "OnFailure"
+          containers:
+          - name: {{ .Chart.Name }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+            envFrom:
+            - secretRef:
+                name: {{ .Chart.Name }}
+            envFrom:
+            - configMapRef:
+                name: {{ template "casa-close-settlement-window.fullname" . }}
+          restartPolicy: OnFailure
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+{{- if .Values.image.imagePullSecrets }}
+          imagePullSecrets:
+{{ toYaml .Values.image.imagePullSecrets | indent 10 }}{{- end }}

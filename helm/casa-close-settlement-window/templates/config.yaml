@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "casa-close-settlement-window.fullname" . }}
+  labels:
+    app: {{ template "casa-close-settlement-window.fullname" . }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  ADMIN_ENDPOINT: {{ required "Settlement endpoint mandatory" .Values.centralLedgerAdminEndpoint }}
+  OPERATOR_SETTLEMENT_ENDPOINT: {{ required "Operator settlement endpoint mandatory" .Values.operatorSettlementsEndpoint }}
+  SETTLEMENT_ENDPOINT: {{ required "Settlement endpoint mandatory" .Values.settlementsEndpoint }}
+  MIN_WINDOW_AGE_MS: "{{ .Values.minWindowAgeMs }}"
