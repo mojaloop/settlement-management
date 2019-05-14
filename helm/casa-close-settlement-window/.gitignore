@@ -1,2 +1,0 @@
-# This should stop us from accidentally committing a sensitive file to the repository
-*.json

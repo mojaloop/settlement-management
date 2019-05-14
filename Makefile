@@ -1,3 +1,4 @@
+
 # Version our container with the current commit hash
 # If our tree isn't clean we'll append "-local" to the version
 # Untracked files are ignored when considering whether the tree is clean
@@ -5,12 +6,13 @@ REV:=$(shell git rev-parse HEAD)
 # It's possible to add --show-untracked=no to the git status command to ignore untracked files
 VER:=${REV}$(shell if [[ `git status --porcelain` ]]; then echo "-local"; fi)
 REPO:=casablanca-casa-docker-release.jfrog.io
-NAME:=close-settlement-window
+NAME:=casa-settlement-management
 TAG:=${REPO}/${NAME}:${VER}
 REPO_ROOT:=$(shell git rev-parse --show-toplevel)
 DOCKER_BUILD_OPTS:=--pull=true
+KEY_PATH:=~/.ssh/id_rsa
 SSH_KEY:=`cat ${KEY_PATH}`
-LISTEN_PORT=3008
+LISTEN_PORT=3002
 
 ## NORMAL BUILDS
 # Containing any local modifications or untracked files, if present. If none are present, will
@@ -22,7 +24,7 @@ build:
 	docker build -t ${TAG} ${DOCKER_BUILD_OPTS} --build-arg SSH_KEY="${SSH_KEY}" .
 
 run: build
-	docker run --env-file=.env -p ${LISTEN_PORT}:5000 ${TAG}
+	docker run --env-file=.env -p ${LISTEN_PORT}:3002 ${TAG}
 
 push: build
 	docker push ${TAG}
