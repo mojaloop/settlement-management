@@ -16,7 +16,7 @@ const verbose = (...args) => { if (VERBOSE) { logger(...(args.map(a => util.insp
 
 app.get('/', (req, res) => res.send('Index page'));
 
-app.get('/close-window', async (req, res) => {
+app.post('/close-window', async (req, res) => {
     let todo = [
         'Close open settlement window',
         'Create settlement containing closed settlement window',
