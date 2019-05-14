@@ -12,12 +12,12 @@
     "type": "git",
     "url": "git+https://github.com/casablanca-project/casablanca-scheduled-tasks.git"
   },
-  "author": "Matt Kingston, ModusBox Inc.",
+  "author": "Matt Kingston, Aarón Reynoza, ModusBox Inc.",
   "license": "UNLICENSED",
   "dependencies": {
     "casablanca-lib": "git+ssh://git@github.com:casablanca-project/casablanca-lib#9d377bb914274a74192d5a18b387e7703da6bac0",
     "dotenv": "^8.0.0",
-    "httpdispatcher": "^2.1.2",
+    "express": "^4.16.4",
     "node-fetch": "^2.2.0"
   },
   "devDependencies": {

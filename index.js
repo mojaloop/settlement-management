@@ -5,34 +5,18 @@ const casalib = require('casablanca-lib');
 const { util: settlementLib, api: Model } = casalib.settlement;
 const { api: adminApi } = casalib.admin;
 const util = require('util');
-const http = require('http');
-const HttpDispatcher = require('httpdispatcher');
-const dispatcher = new HttpDispatcher();
+const express = require("express");
+const app = express();
+const closeWindow = "./closeWindow.js";
 const port = 5000
 
 const VERBOSE = true;
-const logger = (...args) => console.log(`[${(new Date()).toISOString()}] AUTOMATIC SCHEDULED SETTLEMENT |`, ...args);
+const logger = (...args) => console.log(`[${(new Date()).toISOString()}]`, ...args);
 const verbose = (...args) => { if (VERBOSE) { logger(...(args.map(a => util.inspect(a, { depth : Infinity })))); } };
 
-function handleRequest(request, response){
-    try {
-        // log the request on console
-        console.log(request.url);
-        // Dispatch
-        dispatcher.dispatch(request, response);
-    } catch(err) {
-        console.log(err);
-    }
-}
+app.get('/', (req, res) => res.send('Index page'));
 
-const server = http.createServer(handleRequest);
-
-dispatcher.onGet("/", function(req, res) {
-    res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end('Working service');
-});
-
-dispatcher.onGet("/close-window", (req, res) => {
+app.get('/close-window', async (req, res) => {
     let todo = [
         'Close open settlement window',
         'Create settlement containing closed settlement window',
@@ -69,7 +53,7 @@ dispatcher.onGet("/close-window", (req, res) => {
     let getPayers = ps => filterParticipants(ps, x => x > 0);
     let getPayees = ps => filterParticipants(ps, x => x < 0);
     
-    (async () => {
+     await (async () => {
         try {
             // ALL our logic is inside the try/catch block
             const config = require('./config'); // there is a small amount of logic executed in the config module
@@ -206,7 +190,7 @@ dispatcher.onGet("/close-window", (req, res) => {
                 adminApi.fundsInReserve(config.adminEp, p.accounts[0].id,
                     p.accounts[0].netSettlementAmount.amount, 'automatically scheduled settlement');
             });
-    
+            
             // 'Set settlement to SETTLING for payers',
             //result = await lib.putSettlement({
             //    logger: verbose,
@@ -245,24 +229,14 @@ dispatcher.onGet("/close-window", (req, res) => {
             }
     
             // Send status to hub operator
-    
         } catch (err) {
             logger('FATAL', err);
             logger('Steps completed:', done);
             logger('Steps remaining:', todo);
-            res.statusCode = 500;
-            res.end();
+            res.status(500).send(err);
         }
-        logger('SUCCESS');
-        res.statusCode = 200;
-            res.end();
-    })();    
+    })();
+    res.sendStatus(200);
 });
 
-server.listen(port, (err) => {
-  if (err) {
-    return console.log('Server crash: ', err)
-  }
-
-  console.log(`server is listening on ${port}`)
-})
+app.listen(port, () => console.log(`Server listening on port ${port}!`))
