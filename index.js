@@ -6,13 +6,33 @@ const { util: settlementLib, api: Model } = casalib.settlement;
 const { api: adminApi } = casalib.admin;
 const util = require('util');
 const http = require('http');
+const HttpDispatcher = require('httpdispatcher');
+const dispatcher = new HttpDispatcher();
 const port = 5000
 
 const VERBOSE = true;
 const logger = (...args) => console.log(`[${(new Date()).toISOString()}] AUTOMATIC SCHEDULED SETTLEMENT |`, ...args);
 const verbose = (...args) => { if (VERBOSE) { logger(...(args.map(a => util.inspect(a, { depth : Infinity })))); } };
 
-const requestHandler = (req, res) => {
+function handleRequest(request, response){
+    try {
+        // log the request on console
+        console.log(request.url);
+        // Dispatch
+        dispatcher.dispatch(request, response);
+    } catch(err) {
+        console.log(err);
+    }
+}
+
+const server = http.createServer(handleRequest);
+
+dispatcher.onGet("/", function(req, res) {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end('Working service');
+});
+
+dispatcher.onGet("/close-window", (req, res) => {
     let todo = [
         'Close open settlement window',
         'Create settlement containing closed settlement window',
@@ -237,13 +257,11 @@ const requestHandler = (req, res) => {
         res.statusCode = 200;
             res.end();
     })();    
-}
-
-const server = http.createServer(requestHandler)
+});
 
 server.listen(port, (err) => {
   if (err) {
-    return console.log('something bad happened', err)
+    return console.log('Server crash: ', err)
   }
 
   console.log(`server is listening on ${port}`)
