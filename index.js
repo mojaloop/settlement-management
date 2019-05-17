@@ -17,6 +17,7 @@ const verbose = (...args) => { if (VERBOSE) { logger(...(args.map(a => util.insp
 app.get('/', (req, res) => res.send('Index page'));
 
 app.post('/close-window', async (req, res) => {
+    let isValid = true;
     let todo = [
         'Close open settlement window',
         'Create settlement containing closed settlement window',
@@ -53,190 +54,193 @@ app.post('/close-window', async (req, res) => {
     let getPayers = ps => filterParticipants(ps, x => x > 0);
     let getPayees = ps => filterParticipants(ps, x => x < 0);
     
-     await (async () => {
-        try {
-            // ALL our logic is inside the try/catch block
-            const config = require('./config'); // there is a small amount of logic executed in the config module
-    
-            const opts = {
-                endpoint: config.settlementsEp,
-                minAge: config.minAge,
-                logger
-            };
-    
-            logger('Attempting to end settlement window. Config:', config);
-    
-            // close the currently open settlement window
-            const settlementWindowId = await lib.closeOpenSettlementWindow(opts);
-            completeStep();
-            verbose('settlementWindowId', settlementWindowId);
-    
-            // Create a settlement for the just-closed settlement window
-            // Looks like: { id: int, state: str, settlementWindows: [sws], participants: [ps] }
-            const settlement = await lib.createSettlement({ ...opts, settlementWindowId });
-            completeStep();
-            verbose('settlement', settlement);
-            // Result will look something like this:
-            // settlement = { id: 1,
-            //     state: 'SETTLED',
-            //     settlementWindows:
-            //     [ { id: 1,
-            //         state: 'SETTLED',
-            //         reason: 'All settlement accounts are settled',
-            //         createdDate: '2018-11-22T23:30:03.000Z',
-            //         changedDate: '2018-11-23T00:31:36.000Z' } ],
-            //     participants:
-            //     [ { id: 1,
-            //         accounts: [ {
-            //             id: 1,
-            //             state: 'SETTLED',
-            //             reason: 'test',
-            //             netSettlementAmount: { amount: 273, currency: 'XOF' } } ] },
-            //       { id: 2,
-            //         accounts: [ {
-            //             id: 3,
-            //             state: 'SETTLED',
-            //             reason: 'test',
-            //             netSettlementAmount: { amount: -273, currency: 'XOF' } } ] } ] };
-    
-            // For each payer, check the account balance(difference between settlement account balance 
-            // and net settlement amount). If the payer does not have sufficient funds,
-            // set their net debit cap equal to their difference. This reduces exposure to
-            // unfunded transactions.
-           const payers = getPayers(settlement.participants);
-            if (payers.length > 0) {
-                verbose('Checking net senders have sufficient balance to settle, otherwise reducing their net debit cap');
-                await Promise.all(payers.map(async p => {
-                    const dfsp = await adminApi.getParticipantByAccountId(config.adminEp, p.accounts[0].id);
-                    //balance on account is negative, so conversion to positive is necessary for comparatives
-                    const payerSettlementAcccountBalance = -1 * (await adminApi.getAccountByType(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency,'SETTLEMENT')).value;
-                    const payerNetSettlementAmount = p.accounts[0].netSettlementAmount.amount;
-                    const payerNDC = (await adminApi.getNDC(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency)).limit.value;
-                    if ( payerNDC > (payerSettlementAcccountBalance - payerNetSettlementAmount)) {
-                        const result = await adminApi.setNDC(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency, payerSettlementAcccountBalance - payerNetSettlementAmount);
-                        logger(`Settlement amount greater than available balance. Set new NDC for ${dfsp.name}: ${result}.`);
-                    }
-                }));
-            }
-            else
-                verbose('No payers to process');
-            completeStep();
-    
-            // Set each of the payers accounts states to PS_TRANSFERS_RECORDED (pending settlement,
-            // transfers recorded). Payers first, to ensure payers have sufficient funds.
-            let result = await lib.putSettlement({
-                logger: verbose,
-                settlementId: settlement.id,
-                endpoint: config.settlementsEp,
-                participants: newParticipantsAccountState(payers, 'Transfers recorded for payer', 'PS_TRANSFERS_RECORDED')
-            });
-            completeStep();
-            verbose('result', result);
-    
-            // Set each of the payees accounts states to PS_TRANSFERS_RECORDED (pending settlement,
-            // transfers recorded).
-            let payees = getPayees(settlement.participants);
-            verbose('payees', payees);
-            result = await lib.putSettlement({
-                logger: verbose,
-                settlementId: settlement.id,
-                endpoint: config.settlementsEp,
-                participants: newParticipantsAccountState(payees, 'Transfers recorded for payee', 'PS_TRANSFERS_RECORDED')
-            });
-            completeStep();
-            verbose('result', result);
-    
-            // Set each of the participants accounts states to PS_TRANSFERS_RESERVED (pending
-            // settlement, transfers )
-            result = await lib.putSettlement({
-                logger: verbose,
-                settlementId: settlement.id,
-                endpoint: config.settlementsEp,
-                participants: newParticipantsAccountState(settlement.participants, 'Transfers recorded for payer & payee', 'PS_TRANSFERS_RESERVED')
-            });
-            completeStep();
-            verbose('result', result);
-    
-            // Commit transfers for all participants
-            result = await lib.putSettlement({
-                logger: verbose,
-                settlementId: settlement.id,
-                endpoint: config.settlementsEp,
-                participants: newParticipantsAccountState(settlement.participants, 'Transfers committed for payer & payee', 'PS_TRANSFERS_COMMITTED')
-            });
-            completeStep();
-            verbose('result', result);
-    
-            // TODO: when we automate the real-money transaction, we should store this matrix in the db
-            // and explicitly store the "send date" or some sort of Citi transaction ID
-            // Create the payment matrix, store it in the db
-            const matrix = (settlement.participants.length > 0) ?
-                settlementLib.generatePaymentFile(settlement, config.dfspConf) :
-                'No participants in this settlement. No file generated.';
-            verbose('opSettlementsEp', config.opSettlementsEp);
-            const sharedLib = new Model({ endpoint: config.opSettlementsEp });
-            await sharedLib.postSettlementFile(settlement.id, matrix);
-            completeStep();
-            verbose('matrix', matrix);
-    
-            // Reserve funds out
-            payers.forEach(p => {
-                adminApi.fundsOutPrepareReserve(config.adminEp, p.accounts[0].id,
-                    -p.accounts[0].netSettlementAmount.amount, 'automatically scheduled settlement');
-            });
-    
-            // Reserve funds in
-            payees.forEach(p => {
-                adminApi.fundsInReserve(config.adminEp, p.accounts[0].id,
-                    p.accounts[0].netSettlementAmount.amount, 'automatically scheduled settlement');
-            });
-            
-            // 'Set settlement to SETTLING for payers',
-            //result = await lib.putSettlement({
-            //    logger: verbose,
-            //    settlementId: settlement.id,
-            //    endpoint: config.settlementsEp,
-            //    participants: newParticipantsAccountState(payers, 'Payee: SETTLED, settlement: SETTLED', 'SETTLED')
-            //});
-            //completeStep();
-            //verbose('result', result);
-    
-            // 'Set settlement to SETTLING for payees',
-            //result = await lib.putSettlement({
-            //    logger: verbose,
-            //    settlementId: settlement.id,
-            //    endpoint: config.settlementsEp,
-            //    participants: newParticipantsAccountState(payees, 'Payee: SETTLED, settlement: SETTLED', 'SETTLED')
-            //});
-            //completeStep();
-            //verbose('result', result);
-    
-            // 'Commit transfers- set transfers to COMMITTED',
-            //result = await lib.putSettlement({
-            //    logger: verbose,
-            //    settlementId: settlement.id,
-            //    endpoint: config.settlementsEp,
-            //    participants: newParticipantsAccountState(settlement.participants, 'Transfers committed for payer & payee', 'COMMITTED')
-            //});
-            //completeStep();
-            //verbose('result', result);
-    
-            try {
-                // send the payment matrix to the bank
-                // commit the transaction in the switch
-            } catch (err) {
-                // abort the settlement? what happens then?
-            }
-    
-            // Send status to hub operator
-        } catch (err) {
-            logger('FATAL', err);
-            logger('Steps completed:', done);
-            logger('Steps remaining:', todo);
-            res.status(500).send(err);
+    try {
+        // ALL our logic is inside the try/catch block
+        const config = require('./config'); // there is a small amount of logic executed in the config module
+
+        const opts = {
+            endpoint: config.settlementsEp,
+            minAge: config.minAge,
+            logger
+        };
+
+        logger('Attempting to end settlement window. Config:', config);
+
+        // close the currently open settlement window
+        const settlementWindowId = await lib.closeOpenSettlementWindow(opts);
+        completeStep();
+        verbose('settlementWindowId', settlementWindowId);
+
+        // Create a settlement for the just-closed settlement window
+        // Looks like: { id: int, state: str, settlementWindows: [sws], participants: [ps] }
+        const settlement = await lib.createSettlement({ ...opts, settlementWindowId });
+        completeStep();
+        verbose('settlement', settlement);
+        // Result will look something like this:
+        // settlement = { id: 1,
+        //     state: 'SETTLED',
+        //     settlementWindows:
+        //     [ { id: 1,
+        //         state: 'SETTLED',
+        //         reason: 'All settlement accounts are settled',
+        //         createdDate: '2018-11-22T23:30:03.000Z',
+        //         changedDate: '2018-11-23T00:31:36.000Z' } ],
+        //     participants:
+        //     [ { id: 1,
+        //         accounts: [ {
+        //             id: 1,
+        //             state: 'SETTLED',
+        //             reason: 'test',
+        //             netSettlementAmount: { amount: 273, currency: 'XOF' } } ] },
+        //       { id: 2,
+        //         accounts: [ {
+        //             id: 3,
+        //             state: 'SETTLED',
+        //             reason: 'test',
+        //             netSettlementAmount: { amount: -273, currency: 'XOF' } } ] } ] };
+
+        // For each payer, check the account balance(difference between settlement account balance 
+        // and net settlement amount). If the payer does not have sufficient funds,
+        // set their net debit cap equal to their difference. This reduces exposure to
+        // unfunded transactions.
+        const payers = getPayers(settlement.participants);
+        if (payers.length > 0) {
+            verbose('Checking net senders have sufficient balance to settle, otherwise reducing their net debit cap');
+            await Promise.all(payers.map(async p => {
+                const dfsp = await adminApi.getParticipantByAccountId(config.adminEp, p.accounts[0].id);
+                //balance on account is negative, so conversion to positive is necessary for comparatives
+                const payerSettlementAcccountBalance = -1 * (await adminApi.getAccountByType(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency,'SETTLEMENT')).value;
+                const payerNetSettlementAmount = p.accounts[0].netSettlementAmount.amount;
+                const payerNDC = (await adminApi.getNDC(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency)).limit.value;
+                if ( payerNDC > (payerSettlementAcccountBalance - payerNetSettlementAmount)) {
+                    const result = await adminApi.setNDC(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency, payerSettlementAcccountBalance - payerNetSettlementAmount);
+                    logger(`Settlement amount greater than available balance. Set new NDC for ${dfsp.name}: ${result}.`);
+                }
+            }));
         }
-    })();
-    res.sendStatus(200);
+        else
+            verbose('No payers to process');
+        completeStep();
+
+        // Set each of the payers accounts states to PS_TRANSFERS_RECORDED (pending settlement,
+        // transfers recorded). Payers first, to ensure payers have sufficient funds.
+        let result = await lib.putSettlement({
+            logger: verbose,
+            settlementId: settlement.id,
+            endpoint: config.settlementsEp,
+            participants: newParticipantsAccountState(payers, 'Transfers recorded for payer', 'PS_TRANSFERS_RECORDED')
+        });
+        completeStep();
+        verbose('result', result);
+
+        // Set each of the payees accounts states to PS_TRANSFERS_RECORDED (pending settlement,
+        // transfers recorded).
+        let payees = getPayees(settlement.participants);
+        verbose('payees', payees);
+        result = await lib.putSettlement({
+            logger: verbose,
+            settlementId: settlement.id,
+            endpoint: config.settlementsEp,
+            participants: newParticipantsAccountState(payees, 'Transfers recorded for payee', 'PS_TRANSFERS_RECORDED')
+        });
+        completeStep();
+        verbose('result', result);
+
+        // Set each of the participants accounts states to PS_TRANSFERS_RESERVED (pending
+        // settlement, transfers )
+        result = await lib.putSettlement({
+            logger: verbose,
+            settlementId: settlement.id,
+            endpoint: config.settlementsEp,
+            participants: newParticipantsAccountState(settlement.participants, 'Transfers recorded for payer & payee', 'PS_TRANSFERS_RESERVED')
+        });
+        completeStep();
+        verbose('result', result);
+
+        // Commit transfers for all participants
+        result = await lib.putSettlement({
+            logger: verbose,
+            settlementId: settlement.id,
+            endpoint: config.settlementsEp,
+            participants: newParticipantsAccountState(settlement.participants, 'Transfers committed for payer & payee', 'PS_TRANSFERS_COMMITTED')
+        });
+        completeStep();
+        verbose('result', result);
+
+        // TODO: when we automate the real-money transaction, we should store this matrix in the db
+        // and explicitly store the "send date" or some sort of Citi transaction ID
+        // Create the payment matrix, store it in the db
+        const matrix = (settlement.participants.length > 0) ?
+            settlementLib.generatePaymentFile(settlement, config.dfspConf) :
+            'No participants in this settlement. No file generated.';
+        verbose('opSettlementsEp', config.opSettlementsEp);
+        const sharedLib = new Model({ endpoint: config.opSettlementsEp });
+        await sharedLib.postSettlementFile(settlement.id, matrix);
+        completeStep();
+        verbose('matrix', matrix);
+
+        // Reserve funds out
+        payers.forEach(p => {
+            adminApi.fundsOutPrepareReserve(config.adminEp, p.accounts[0].id,
+                -p.accounts[0].netSettlementAmount.amount, 'automatically scheduled settlement');
+        });
+
+        // Reserve funds in
+        payees.forEach(p => {
+            adminApi.fundsInReserve(config.adminEp, p.accounts[0].id,
+                p.accounts[0].netSettlementAmount.amount, 'automatically scheduled settlement');
+        });
+        
+        // 'Set settlement to SETTLING for payers',
+        //result = await lib.putSettlement({
+        //    logger: verbose,
+        //    settlementId: settlement.id,
+        //    endpoint: config.settlementsEp,
+        //    participants: newParticipantsAccountState(payers, 'Payee: SETTLED, settlement: SETTLED', 'SETTLED')
+        //});
+        //completeStep();
+        //verbose('result', result);
+
+        // 'Set settlement to SETTLING for payees',
+        //result = await lib.putSettlement({
+        //    logger: verbose,
+        //    settlementId: settlement.id,
+        //    endpoint: config.settlementsEp,
+        //    participants: newParticipantsAccountState(payees, 'Payee: SETTLED, settlement: SETTLED', 'SETTLED')
+        //});
+        //completeStep();
+        //verbose('result', result);
+
+        // 'Commit transfers- set transfers to COMMITTED',
+        //result = await lib.putSettlement({
+        //    logger: verbose,
+        //    settlementId: settlement.id,
+        //    endpoint: config.settlementsEp,
+        //    participants: newParticipantsAccountState(settlement.participants, 'Transfers committed for payer & payee', 'COMMITTED')
+        //});
+        //completeStep();
+        //verbose('result', result);
+
+        try {
+            // send the payment matrix to the bank
+            // commit the transaction in the switch
+        } catch (err) {
+            // abort the settlement? what happens then?
+        }
+
+        // Send status to hub operator
+    } catch (err) {
+        logger('FATAL', err);
+        logger('Steps completed:', done);
+        logger('Steps remaining:', todo);
+        res.status(500).send(err);
+        isValid = !isValid;
+    } finally {
+        if (isValid) {
+            logger("Process completed successfully", "");
+            res.status(200).json('success');
+        }
+    }
 });
 
 app.listen(port, () => console.log(`Server listening on port ${port}!`))
