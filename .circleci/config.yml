@@ -1,0 +1,23 @@
+version: 2
+general:
+  branches:
+    only:
+      - master # Only PR's to master will trigger a build
+jobs:
+  build:
+    docker:
+      - image: circleci/node:stretch
+    steps:
+      - checkout
+      - run:
+          name: update-npm
+          command: 'sudo npm install -g npm@latest'
+      - run:
+          name: install-npm-dependencies
+          command: npm install
+      - run:
+          name: lint
+          command: npm run lint
+      - run:
+          name: test
+          command: npm test

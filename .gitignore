@@ -1,3 +1,4 @@
 node_modules
 .env
 gh_casa_lib_deploy_key
+.idea/

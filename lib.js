@@ -1,13 +1,5 @@
-'use strict';
-
 const fetch = require('node-fetch');
 const util = require('util');
-
-module.exports = {
-    closeOpenSettlementWindow,
-    createSettlement,
-    putSettlement
-};
 
 const throwOrJson = async (res, msg = 'Error calling API') => {
     const resp = await res.json();
@@ -19,10 +11,10 @@ const throwOrJson = async (res, msg = 'Error calling API') => {
 
 const headers = () => ({
     // judging by the ml settlements source code, none of this stuff is actually necessary
-    'Accept': 'application/json',
+    Accept: 'application/json',
     'Content-Type': 'application/json',
-    'Date': (new Date()).toISOString(),
-    'FSPIOP-Source': 'switch'
+    Date: (new Date()).toISOString(),
+    'FSPIOP-Source': 'switch',
 });
 
 async function closeOpenSettlementWindow({ logger, endpoint, minAge }) {
@@ -44,7 +36,7 @@ async function closeOpenSettlementWindow({ logger, endpoint, minAge }) {
         throw new Error(util.format('Failed to close settlement window', findRes));
     }
 
-    if (findRes.length != 1) {
+    if (findRes.length !== 1) {
         throw new Error(util.format('Wrong number of settlement windows', findRes));
     }
 
@@ -64,8 +56,8 @@ async function closeOpenSettlementWindow({ logger, endpoint, minAge }) {
         headers: headers(),
         body: JSON.stringify({
             state: 'CLOSED',
-            reason: 'automatically scheduled closure'
-        })
+            reason: 'automatically scheduled closure',
+        }),
     };
     const closeUrl = `${endpoint}/settlementWindows/${id}`;
     logger('Closing settlement window at URL', closeUrl, 'options', closeOpts);
@@ -90,22 +82,30 @@ async function createSettlement({ endpoint, settlementWindowId, logger = () => {
         headers: headers(),
         body: JSON.stringify({
             reason: 'automatically scheduled settlement',
-            settlementWindows: [ { id: settlementWindowId } ]
-        })
+            settlementWindows: [{ id: settlementWindowId }],
+        }),
     };
     const url = `${endpoint}/settlements`;
     logger('createSettlement endpoint', endpoint, 'settlementWindowId', settlementWindowId, 'url', url, 'opts', opts);
-    return await fetch(url, opts).then(throwOrJson);
+    return fetch(url, opts).then(throwOrJson);
 }
 
-async function putSettlement({ settlementId, endpoint, participants, logger = () => {} }) {
+async function putSettlement({
+    settlementId, endpoint, participants, logger = () => {},
+}) {
     const opts = {
         method: 'PUT',
         headers: headers(),
         body: JSON.stringify({
-            participants
-        })
+            participants,
+        }),
     };
     logger('putSettlement endpoint', endpoint, 'settlementId', settlementId, 'opts', opts);
-    return await fetch(`${endpoint}/settlements/${settlementId}`, opts).then(throwOrJson);
+    return fetch(`${endpoint}/settlements/${settlementId}`, opts).then(throwOrJson);
 }
+
+module.exports = {
+    closeOpenSettlementWindow,
+    createSettlement,
+    putSettlement,
+};

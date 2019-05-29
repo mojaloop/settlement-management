@@ -1,9 +1,8 @@
-'use strict';
-
+const mysql = require('mysql');
+const uuidv4 = require('uuid/v4');
 const connParams = require('./mysql.json');
-const mysql      = require('mysql');
-const uuidv4     = require('uuid/v4');
-const conn       = mysql.createConnection({ ...connParams, multipleStatements: true });
+
+const conn = mysql.createConnection({ ...connParams, multipleStatements: true });
 
 console.log(connParams);
 
@@ -14,18 +13,12 @@ const newTransfer = {
     hash: 'invalid-test-hash',
     transactionReferenceId: uuidv4(),
     amount: (Math.random() * 100).toFixed(2),
-    transferExpirationDate: (new Date(Date.now())).toISOString().replace('T',' ').split('.')[0],
+    transferExpirationDate: (new Date(Date.now())).toISOString().replace('T', ' ').split('.')[0],
     transferFulfilmentId: uuidv4(),
-    transferCompletedDate: (new Date(Date.now())).toISOString().replace('T',' ').split('.')[0],
+    transferCompletedDate: (new Date(Date.now())).toISOString().replace('T', ' ').split('.')[0],
     payerParticipantId: 4,
-    payeeParticipantId: 5
+    payeeParticipantId: 5,
 };
-
-const query = createQuery({ ...newTransfer, settlementWindowId: 256 });
-
-conn.query(query);
-
-conn.end();
 
 function createQuery({
     settlementWindowId,
@@ -37,7 +30,7 @@ function createQuery({
     transferFulfilmentId,
     transferCompletedDate,
     payerParticipantId,
-    payeeParticipantId
+    payeeParticipantId,
 }) {
     return `
         START TRANSACTION;
@@ -103,3 +96,9 @@ function createQuery({
         COMMIT;
     `;
 }
+
+const query = createQuery({ ...newTransfer, settlementWindowId: 256 });
+
+conn.query(query);
+
+conn.end();
