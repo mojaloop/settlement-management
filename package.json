@@ -7,7 +7,7 @@
     "build": "docker build -t casa-close-settlement-window:latest ./",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest test/ --passWithNoTests"
   },
   "repository": {
     "type": "git",
