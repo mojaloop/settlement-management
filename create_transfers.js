@@ -20,12 +20,6 @@ const newTransfer = {
     payeeParticipantId: 5,
 };
 
-const query = createQuery({ ...newTransfer, settlementWindowId: 256 });
-
-conn.query(query);
-
-conn.end();
-
 function createQuery({
     settlementWindowId,
     quoteId,
@@ -102,3 +96,9 @@ function createQuery({
         COMMIT;
     `;
 }
+
+const query = createQuery({ ...newTransfer, settlementWindowId: 256 });
+
+conn.query(query);
+
+conn.end();
