@@ -1,6 +1,9 @@
 version: 2
 jobs:
   build:
+    branches:
+      only:
+        - master # Only PR's to master will trigger a build
     docker:
       - image: circleci/node:stretch
     steps:
