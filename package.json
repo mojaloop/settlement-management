@@ -19,13 +19,13 @@
     "casablanca-lib": "git+ssh://git@github.com:casablanca-project/casablanca-lib#ab4448934ea180e94752175e47cce7375a2f946f",
     "dotenv": "^8.0.0",
     "express": "^4.16.4",
-    "node-fetch": "^2.2.0"
+    "mysql": "^2.16.0",
+    "node-fetch": "^2.2.0",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "eslint": "^5.3.0",
     "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.17.3",
-    "mysql": "^2.16.0",
-    "uuid": "^3.3.2"
+    "eslint-plugin-import": "^2.17.3"
   }
 }
