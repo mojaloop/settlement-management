@@ -7,12 +7,17 @@ const express = require('express');
 const lib = require('./lib');
 
 const app = express();
-const closeWindow = './closeWindow.js';
+// TODO: Use closeWindow below
+// const closeWindow = './closeWindow.js';
 const port = 5000;
 
 const VERBOSE = true;
 const logger = (...args) => console.log(`[${(new Date()).toISOString()}]`, ...args);
-const verbose = (...args) => { if (VERBOSE) { logger(...(args.map(a => util.inspect(a, { depth: Infinity })))); } };
+const verbose = (...args) => {
+    if (VERBOSE) {
+        logger(...(args.map(a => util.inspect(a, { depth: Infinity }))));
+    }
+};
 
 app.get('/', (req, res) => res.send('Index page'));
 
@@ -56,6 +61,8 @@ app.post('/close-window', async (req, res) => {
 
     try {
         // ALL our logic is inside the try/catch block
+        // TODO: Do not rely on side-effecting requires
+        // eslint-disable-next-line global-require
         const config = require('./config'); // there is a small amount of logic executed in the config module
 
         const opts = {
@@ -107,13 +114,34 @@ app.post('/close-window', async (req, res) => {
         if (payers.length > 0) {
             verbose('Checking net senders have sufficient balance to settle, otherwise reducing their net debit cap');
             await Promise.all(payers.map(async (p) => {
-                const dfsp = await adminApi.getParticipantByAccountId(config.adminEp, p.accounts[0].id);
-                // balance on account is negative, so conversion to positive is necessary for comparatives
-                const payerSettlementAcccountBalance = -1 * (await adminApi.getAccountByType(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency, 'SETTLEMENT')).value;
+                const dfsp = await adminApi
+                    .getParticipantByAccountId(config.adminEp, p.accounts[0].id);
+                // balance on account is negative, so conversion to positive is necessary for
+                // comparatives
+                const payerSettlementAcccountBalance = -1 * (await adminApi
+                    .getAccountByType(
+                        config.adminEp,
+                        dfsp.name,
+                        p.accounts[0].netSettlementAmount.currency,
+                        'SETTLEMENT',
+                    ))
+                    .value;
                 const payerNetSettlementAmount = p.accounts[0].netSettlementAmount.amount;
-                const payerNDC = (await adminApi.getNDC(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency)).limit.value;
+                const payerNDC = (await adminApi
+                    .getNDC(
+                        config.adminEp,
+                        dfsp.name,
+                        p.accounts[0].netSettlementAmount.currency,
+                    ))
+                    .limit.value;
                 if (payerNDC > (payerSettlementAcccountBalance - payerNetSettlementAmount)) {
-                    const result = await adminApi.setNDC(config.adminEp, dfsp.name, p.accounts[0].netSettlementAmount.currency, payerSettlementAcccountBalance - payerNetSettlementAmount);
+                    const result = await adminApi
+                        .setNDC(
+                            config.adminEp,
+                            dfsp.name,
+                            p.accounts[0].netSettlementAmount.currency,
+                            payerSettlementAcccountBalance - payerNetSettlementAmount,
+                        );
                     logger(`Settlement amount greater than available balance. Set new NDC for ${dfsp.name}: ${result}.`);
                 }
             }));
@@ -194,7 +222,12 @@ app.post('/close-window', async (req, res) => {
         //    logger: verbose,
         //    settlementId: settlement.id,
         //    endpoint: config.settlementsEp,
-        //    participants: newParticipantsAccountState(payers, 'Payee: SETTLED, settlement: SETTLED', 'SETTLED')
+        //    participants: newParticipantsAccountState(
+        //      payers,
+        //      'Payee: SETTLED,
+        //      settlement: SETTLED',
+        //      'SETTLED',
+        //    )
         // });
         // completeStep();
         // verbose('result', result);
@@ -204,7 +237,12 @@ app.post('/close-window', async (req, res) => {
         //    logger: verbose,
         //    settlementId: settlement.id,
         //    endpoint: config.settlementsEp,
-        //    participants: newParticipantsAccountState(payees, 'Payee: SETTLED, settlement: SETTLED', 'SETTLED')
+        //    participants: newParticipantsAccountState(
+        //      payees,
+        //      'Payee: SETTLED,
+        //      settlement: SETTLED',
+        //      'SETTLED',
+        //    )
         // });
         // completeStep();
         // verbose('result', result);
@@ -214,7 +252,11 @@ app.post('/close-window', async (req, res) => {
         //    logger: verbose,
         //    settlementId: settlement.id,
         //    endpoint: config.settlementsEp,
-        //    participants: newParticipantsAccountState(settlement.participants, 'Transfers committed for payer & payee', 'COMMITTED')
+        //    participants: newParticipantsAccountState(
+        //      settlement.participants,
+        //      'Transfers committed for payer & payee',
+        //      'COMMITTED',
+        //    )
         // });
         // completeStep();
         // verbose('result', result);

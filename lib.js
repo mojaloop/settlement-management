@@ -1,12 +1,6 @@
 const fetch = require('node-fetch');
 const util = require('util');
 
-module.exports = {
-    closeOpenSettlementWindow,
-    createSettlement,
-    putSettlement,
-};
-
 const throwOrJson = async (res, msg = 'Error calling API') => {
     const resp = await res.json();
     if (res.ok) {
@@ -42,7 +36,7 @@ async function closeOpenSettlementWindow({ logger, endpoint, minAge }) {
         throw new Error(util.format('Failed to close settlement window', findRes));
     }
 
-    if (findRes.length != 1) {
+    if (findRes.length !== 1) {
         throw new Error(util.format('Wrong number of settlement windows', findRes));
     }
 
@@ -93,7 +87,7 @@ async function createSettlement({ endpoint, settlementWindowId, logger = () => {
     };
     const url = `${endpoint}/settlements`;
     logger('createSettlement endpoint', endpoint, 'settlementWindowId', settlementWindowId, 'url', url, 'opts', opts);
-    return await fetch(url, opts).then(throwOrJson);
+    return fetch(url, opts).then(throwOrJson);
 }
 
 async function putSettlement({
@@ -107,5 +101,11 @@ async function putSettlement({
         }),
     };
     logger('putSettlement endpoint', endpoint, 'settlementId', settlementId, 'opts', opts);
-    return await fetch(`${endpoint}/settlements/${settlementId}`, opts).then(throwOrJson);
+    return fetch(`${endpoint}/settlements/${settlementId}`, opts).then(throwOrJson);
 }
+
+module.exports = {
+    closeOpenSettlementWindow,
+    createSettlement,
+    putSettlement,
+};
