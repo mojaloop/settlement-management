@@ -10,7 +10,7 @@ NAME:=casa-settlement-management
 TAG:=${REPO}/${NAME}:${VER}
 REPO_ROOT:=$(shell git rev-parse --show-toplevel)
 DOCKER_BUILD_OPTS:=--pull=true
-KEY_PATH:=~/.ssh/id_rsa
+KEY_PATH:=./gh_casa_lib_deploy_key
 SSH_KEY:=`cat ${KEY_PATH}`
 LISTEN_PORT=3002
 

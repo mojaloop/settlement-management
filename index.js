@@ -12,6 +12,7 @@ const app = express();
 const port = 5000;
 
 const VERBOSE = true;
+// eslint-disable-next-line no-console
 const logger = (...args) => console.log(`[${(new Date()).toISOString()}]`, ...args);
 const verbose = (...args) => {
     if (VERBOSE) {
@@ -21,8 +22,8 @@ const verbose = (...args) => {
 
 app.get('/', (req, res) => res.send('Index page'));
 
+// req.query.minAgeMs specifies the minimum age for the window
 app.post('/close-window', async (req, res) => {
-    let isValid = true;
     const todo = [
         'Close open settlement window',
         'Create settlement containing closed settlement window',
@@ -65,9 +66,13 @@ app.post('/close-window', async (req, res) => {
         // eslint-disable-next-line global-require
         const config = require('./config'); // there is a small amount of logic executed in the config module
 
+        if (req.query.minAgeMs !== undefined && !/\d+/.test(req.query.minAgeMs)) {
+            return res.status(400).json('Invalid minimum window age. Non-negative integer expected.');
+        }
+
         const opts = {
             endpoint: config.settlementsEp,
-            minAge: config.minAge,
+            minAge: req.query.minAgeMs === undefined ? config.minAge : +req.query.minAgeMs,
             logger,
         };
 
@@ -268,19 +273,16 @@ app.post('/close-window', async (req, res) => {
             // abort the settlement? what happens then?
         }
 
+        logger('Process completed successfully', '');
+        return res.status(200).json('success');
+
         // Send status to hub operator
     } catch (err) {
         logger('FATAL', err);
         logger('Steps completed:', done);
         logger('Steps remaining:', todo);
-        res.status(500).send(err);
-        isValid = !isValid;
-    } finally {
-        if (isValid) {
-            logger('Process completed successfully', '');
-            res.status(200).json('success');
-        }
+        return res.status(500).send(err);
     }
 });
 
-app.listen(port, () => console.log(`Server listening on port ${port}!`));
+app.listen(port, () => logger(`Server listening on port ${port}!`));
