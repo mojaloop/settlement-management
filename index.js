@@ -5,6 +5,7 @@ const { api: adminApi } = casalib.admin;
 const util = require('util');
 const express = require('express');
 const lib = require('./lib');
+const config = require('./config');
 
 const app = express();
 // TODO: Use closeWindow below
@@ -62,9 +63,6 @@ app.post('/close-window', async (req, res) => {
 
     try {
         // ALL our logic is inside the try/catch block
-        // TODO: Do not rely on side-effecting requires
-        // eslint-disable-next-line global-require
-        const config = require('./config'); // there is a small amount of logic executed in the config module
 
         if (req.query.minAgeMs !== undefined && !/\d+/.test(req.query.minAgeMs)) {
             return res.status(400).json('Invalid minimum window age. Non-negative integer expected.');
@@ -72,7 +70,7 @@ app.post('/close-window', async (req, res) => {
 
         const opts = {
             endpoint: config.settlementsEp,
-            minAge: req.query.minAgeMs === undefined ? config.minAge : +req.query.minAgeMs,
+            minAge: req.query.minAgeMs === undefined ? config.minAge : req.query.minAgeMs,
             logger,
         };
 
