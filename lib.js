@@ -17,7 +17,7 @@ const headers = () => ({
     'FSPIOP-Source': 'switch',
 });
 
-async function closeOpenSettlementWindow({ logger, endpoint, minAge }) {
+async function closeOpenSettlementWindow({ logger, endpoint, minAgeMs }) {
     // Get the open settlement window
     const findOpts = {
         method: 'GET',
@@ -44,8 +44,8 @@ async function closeOpenSettlementWindow({ logger, endpoint, minAge }) {
     logger('Open windows found', findRes, 'closing', closeWindow);
 
     const age = (new Date()) - (new Date(closeWindow.createdDate));
-    if (age < minAge) {
-        logger(`Settlement window younger than minimum age (${minAge}ms); assume this is a concurrently scheduled job`);
+    if (age < minAgeMs) {
+        logger(`Settlement window younger than minimum age (${minAgeMs}ms); assume this is a concurrently scheduled job`);
         process.exit(0);
     }
 
