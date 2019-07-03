@@ -1,4 +1,5 @@
 const casalib = require('casablanca-lib');
+const fetch = require('node-fetch');
 
 const { util: settlementLib, api: Model } = casalib.settlement;
 const { api: adminApi } = casalib.admin;
@@ -199,8 +200,15 @@ app.post('/close-window', async (req, res) => {
         // TODO: when we automate the real-money transaction, we should store this matrix in the db
         // and explicitly store the "send date" or some sort of Citi transaction ID
         // Create the payment matrix, store it in the db
+        const accounts = await fetch(`${config.portalBackend}/dfsps-accounts`).then(respon => respon.json());
+        const dfspAccounts = Object.assign({}, accounts
+            .map(acc => ({
+                name: acc.participantName,
+                country: acc.accountCountry,
+                accountId: acc.accountNumber,
+            }))); // Probably not a good indentation. Too much LISP can change you
         const matrix = (settlement.participants.length > 0)
-            ? settlementLib.generatePaymentFile(settlement, config.dfspConf)
+            ? settlementLib.generatePaymentFile(settlement, dfspAccounts)
             : 'No participants in this settlement. No file generated.';
         verbose('opSettlementsEp', config.opSettlementsEp);
         const sharedLib = new Model({ endpoint: config.opSettlementsEp });
@@ -283,4 +291,6 @@ app.post('/close-window', async (req, res) => {
     }
 });
 
-app.listen(port, () => logger(`Server listening on port ${port}!`));
+const server = app.listen(port,
+    () => logger(`Server listening on port ${port}!`));
+module.exports = server;
