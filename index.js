@@ -201,12 +201,15 @@ app.post('/close-window', async (req, res) => {
         // and explicitly store the "send date" or some sort of Citi transaction ID
         // Create the payment matrix, store it in the db
         const accounts = await fetch(`${config.portalBackend}/dfsps-accounts`).then(respon => respon.json());
-        const dfspAccounts = Object.assign({}, accounts
-            .map(acc => ({
-                name: acc.participantName,
-                country: acc.accountCountry,
-                accountId: acc.accountNumber,
-            }))); // Probably not a good indentation. Too much LISP can change you
+        const dfspAccounts = accounts.reduce((acc, current) => (
+            {
+                ...acc,
+                [current.participantId]: {
+                    name: current.name,
+                    country: current.accountCountry,
+                    accountId: current.accountNumber,
+                },
+            }), {}); // Probably not a good indentation. Too much LISP can change you
         const matrix = (settlement.participants.length > 0)
             ? settlementLib.generatePaymentFile(settlement, dfspAccounts)
             : 'No participants in this settlement. No file generated.';

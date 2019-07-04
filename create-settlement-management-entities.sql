@@ -11,7 +11,6 @@ CREATE TABLE IF NOT EXISTS participantSettlementBankAccountNumber (
     participantCurrencyId INT UNSIGNED NOT NULL COMMENT 'The settlement currency corresponding to this bank account',
     accountCountry VARCHAR(2) NOT NULL COMMENT 'The code that represents the country',
     accountNumber VARCHAR(256) NOT NULL COMMENT 'The externally encrypted account number',
-    participantName VARCHAR(256) NOT NULL COMMENT 'Name of the DFSP',
     createdDate DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL COMMENT 'System dateTime stamp pertaining to the inserted record',
     CONSTRAINT participantsettlementbankaccountnumber_participantcurrency_fk FOREIGN KEY (participantCurrencyId) REFERENCES participantCurrency (participantCurrencyId)
 );
