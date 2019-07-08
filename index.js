@@ -211,7 +211,7 @@ app.post('/close-window', async (req, res) => {
                 },
             }), {}); // Probably not a good indentation. Too much LISP can change you
         const matrix = (settlement.participants.length > 0)
-            ? settlementLib.generatePaymentFile(settlement, dfspAccounts)
+            ? settlementLib.generatePaymentFile(settlement, dfspAccounts, settlementWindowId)
             : 'No participants in this settlement. No file generated.';
         verbose('opSettlementsEp', config.opSettlementsEp);
         const sharedLib = new Model({ endpoint: config.opSettlementsEp });
