@@ -1,0 +1,31 @@
+# Default values for casa-close-settlement-window.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+image:
+  repository: casablanca-casa-docker-release.jfrog.io/casa-settlement-management
+  tag: 10.2.1
+  pullPolicy: Always
+  imagePullSecrets:
+    name: dock-casa-secret
+
+init:
+  enabled: true
+  image:
+    name: create-casa-settlement-management-tables
+    repository: casablanca-casa-docker-release.jfrog.io/casa-settlement-management-init
+    tag: 10.2.1
+    pullPolicy: Always
+
+service:
+  type: ClusterIP
+  port: 5000
+
+config:
+  CENTRAL_LEDGER_SERVICE_NAME: 'centralledger-service'
+  CENTRAL_LEDGER_SERVICE_ADMIN_PORT: '3001'
+  SETTLEMENTS_SERVICE_NAME: 'centralsettlement'
+  SETTLEMENTS_SERVICE_PORT: '3007'
+  MIN_WINDOW_AGE_MS: '5000'
+  OPERATOR_SETTLEMENTS_SERVICE_NAME: 'operator-settlement'
+  OPERATOR_SETTLEMENTS_SERVICE_PORT: '80'

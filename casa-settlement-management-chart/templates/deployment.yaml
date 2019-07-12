@@ -1,0 +1,55 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "casa-settlement-management.fullname" . }}
+  labels:
+    app: {{ template "casa-settlement-management.name" . }}
+    chart: {{ template "casa-settlement-management.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "casa-settlement-management.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "casa-settlement-management.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.init.enabled }}
+      initContainers:
+        - name: {{ .Values.init.image.name }}
+          image: {{ .Values.init.image.repository }}:{{ .Values.init.image.tag }}
+          imagePullPolicy: {{ .Values.init.image.pullPolicy }}
+          env:
+          - name: CLEDG_DATABASE_URI
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "casa-settlement-management.fullname" . }}
+                key: db.uri
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: 5000
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        envFrom:
+        - configMapRef:
+            name: {{ template "casa-settlement-management.fullname" . }}
+        - secretRef:
+            name:  {{ template "casa-settlement-management.fullname" . }}
+      imagePullSecrets:
+      - name: {{ .Values.image.imagePullSecrets.name }}
