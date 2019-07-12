@@ -31,4 +31,4 @@ WORKDIR /src
 CMD ["node", "/src/index.js"]
 
 COPY --from=builder /src /src
-COPY ./config.js ./index.js ./lib.js /src/
+COPY ./config.js ./db.js ./index.js ./lib.js /src/

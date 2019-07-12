@@ -19,8 +19,8 @@
     "casablanca-lib": "git+ssh://git@github.com:casablanca-project/casablanca-lib#e6e54c7bec8c76997b4b609c836b8b154d56c515",
     "dotenv": "^8.0.0",
     "express": "^4.16.4",
-    "mysql": "^2.16.0",
-    "node-fetch": "^2.2.0",
+    "mysql2": "^1.6.5",
+    "node-fetch": "^2.6.0",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

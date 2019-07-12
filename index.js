@@ -1,5 +1,4 @@
 const casalib = require('casablanca-lib');
-const fetch = require('node-fetch');
 
 const { util: settlementLib, api: Model } = casalib.settlement;
 const { api: adminApi } = casalib.admin;
@@ -7,8 +6,13 @@ const util = require('util');
 const express = require('express');
 const lib = require('./lib');
 const config = require('./config');
+const Database = require('./db');
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+const db = new Database(config.db);
 // TODO: Use closeWindow below
 // const closeWindow = './closeWindow.js';
 const port = 5000;
@@ -74,8 +78,6 @@ app.post('/close-window', async (req, res) => {
             minAge: req.query.minAgeMs === undefined ? config.minAge : req.query.minAgeMs,
             logger,
         };
-
-        logger('Attempting to end settlement window. Config:', config);
 
         // close the currently open settlement window
         const settlementWindowId = await lib.closeOpenSettlementWindow(opts);
@@ -200,7 +202,7 @@ app.post('/close-window', async (req, res) => {
         // TODO: when we automate the real-money transaction, we should store this matrix in the db
         // and explicitly store the "send date" or some sort of Citi transaction ID
         // Create the payment matrix, store it in the db
-        const accounts = await fetch(`${config.portalBackend}/dfsps-accounts`).then(respon => respon.json());
+        const accounts = await db.getDfspsAccounts();
         const dfspAccounts = accounts.reduce((acc, current) => (
             {
                 ...acc,
@@ -294,6 +296,28 @@ app.post('/close-window', async (req, res) => {
     }
 });
 
+app.get('/dfsps-accounts', async (req, res) => {
+    const dfspsAccounts = await db.getDfspsAccounts();
+    return res.status(200).json(dfspsAccounts);
+});
+
+app.post('/dfsps-accounts', async (req, res) => {
+    const {
+        participantId,
+        accountCountry,
+        accountNumber,
+        currencyId,
+    } = req.body;
+    try {
+        const dfspsAccount = await
+        db.createDfspAccount(participantId, accountCountry, accountNumber, currencyId);
+        return res.status(200).json(dfspsAccount);
+    } catch (error) {
+        return res.status(500).json({ error });
+    }
+});
+
+console.log('Running with config: ', config); // eslint-disable-line no-console
 const server = app.listen(port,
-    () => logger(`Server listening on port ${port}!`));
+    () => logger(`Server listening on port ${port}.`));
 module.exports = server;
