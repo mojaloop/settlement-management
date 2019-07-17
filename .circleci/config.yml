@@ -1,6 +1,11 @@
 # CircleCI v2 Config
 version: 2
 
+general:
+  branches:
+    only:
+      - master
+
 defaults_working_directory: &defaults_working_directory
   working_directory: /home/circleci/project
 
@@ -12,36 +17,28 @@ defaults_docker_helm_kube: &defaults_docker_helm_kube
   docker:
     - image: hypnoglow/kubernetes-helm
 
-defaults_Dependencies: &defaults_Dependencies |
-    apk --no-cache add git
-    apk --no-cache add ca-certificates
-    apk --no-cache add curl
-    apk --no-cache add openssh-client
-    apk add --no-cache -t build-dependencies make gcc g++ python libtool autoconf automake
-    npm config set unsafe-perm true
-    npm install -g node-gyp
-
-defaults_Environment: &defaults_environment
-  name: Set default environment
-  command: |
-    echo "Nothing to do here right now...move along!"
-
 defaults_build_docker_login: &defaults_build_docker_login
   name: Login to Docker Hub
   command: |
     docker login -u $DOCKER_USER -p $DOCKER_PASS $DOCKER_ORG
 
+defaults_build_docker_test: &defaults_build_docker_test
+  name: Build Docker test image
+  command: |
+    echo "Building Docker image: test"
+    docker build --pull --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:test .
+
 defaults_build_docker_build: &defaults_build_docker_build
   name: Build Docker $CIRCLE_TAG image
   command: |
     echo "Building Docker image: $CIRCLE_TAG"
-    docker build --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG .
+    docker build --pull --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG .
 
 defaults_build_docker_build_release: &defaults_build_docker_build_release
   name: Build Docker $RELEASE_TAG image
   command: |
     echo "Building Docker image: $RELEASE_TAG"
-    docker build --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG .
+    docker build --pull --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG .
 
 defaults_build_docker_publish: &defaults_build_docker_publish
   name: Publish Docker image $CIRCLE_TAG & Latest tag to Docker Hub
@@ -61,7 +58,7 @@ defaults_deploy_configure_helm: &defaults_deploy_configure_helm
     helm init --client-only
 
 jobs:
-  test-unit:
+  test_unit:
     <<: *defaults_working_directory
     <<: *defaults_docker_node
     steps:
@@ -84,13 +81,20 @@ jobs:
       - run:
           name: test
           command: npm test
-  buildAndPublishDocker:
+  build_docker:
     machine: true
     # <<: *default_env
     steps:
       - checkout
       - run:
-          <<: *defaults_environment
+          <<: *defaults_build_docker_login
+      - run:
+          <<: *defaults_build_docker_test
+  build_and_publish_docker:
+    machine: true
+    # <<: *default_env
+    steps:
+      - checkout
       - run:
           name: setup environment vars for LATEST release
           command: |
@@ -105,7 +109,15 @@ jobs:
           <<: *defaults_build_docker_publish
       - run:
           <<: *defaults_build_docker_publish_release
-  buildAndPublishHelm:
+  build_helm:
+    docker:
+      - image: hypnoglow/kubernetes-helm:2.9.1
+    steps:
+      - checkout
+      - run:
+          name: package helm chart
+          command: helm package $CIRCLE_PROJECT_REPONAME-chart
+  build_and_publish_helm:
     docker:
       - image: hypnoglow/kubernetes-helm:2.9.1
     steps:
@@ -121,32 +133,33 @@ workflows:
   version: 2
   test_docker_helm:
     jobs:
-      - test-unit:
+      - test_unit:
           context: org-global
           filters:
             tags:
               only: /.*/
-            branches:
-              ignore:
-                - /feature*/
-                - /bugfix*/
-      - buildAndPublishDocker:
+      - build_docker:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
+      - build_helm:
+          context: org-global
+          filters:
+            tags:
+              only: /.*/
+      - build_and_publish_docker:
           context: org-global
           requires:
-            - test-unit
+            - test_unit
+            - build_docker
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
-            branches:
-              ignore:
-                - /.*/
-      - buildAndPublishHelm:
+      - build_and_publish_helm:
           context: org-global
           requires:
-            - buildAndPublishDocker
+            - build_and_publish_docker
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*/
-            branches:
-              ignore:
-                - /.*/
