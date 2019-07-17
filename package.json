@@ -16,7 +16,8 @@
   "author": "Matt Kingston, Aarón Reynoza, ModusBox Inc.",
   "license": "UNLICENSED",
   "dependencies": {
-    "casablanca-lib": "git+ssh://git@github.com:casablanca-project/casablanca-lib#e6e54c7bec8c76997b4b609c836b8b154d56c515",
+    "big.js": "^5.2.2",
+    "casablanca-lib": "git+ssh://git@github.com:casablanca-project/casablanca-lib#12cb2e48219422f9e17cbc58f12c3c605e9e8856",
     "dotenv": "^8.0.0",
     "express": "^4.16.4",
     "mysql2": "^1.6.5",

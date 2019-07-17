@@ -1,4 +1,5 @@
 const casalib = require('casablanca-lib');
+const Big = require('big.js');
 
 const { util: settlementLib, api: Model } = casalib.settlement;
 const { api: adminApi } = casalib.admin;
@@ -215,9 +216,39 @@ app.post('/close-window', async (req, res) => {
         const matrix = (settlement.participants.length > 0)
             ? settlementLib.generatePaymentFile(settlementWindowId, settlement, dfspAccounts)
             : 'No participants in this settlement. No file generated.';
+
+        // Get the simplified version of the payment matrix
+        const simpleMatrix = (settlement.participants.length > 0)
+            ? settlementLib.minPaymentsAlgorithm(settlement)
+            : null;
+
+        let simpleFundsTransfer = [];
+        if (simpleMatrix !== null) {
+            const credits = [];
+            // Get the debit transfers
+            const debits = Object.entries(simpleMatrix.matrix)
+                .map(([payer, payments]) => [simpleMatrix.currency, payer,
+                    Object.values(payments).reduce((a, b) => a.plus(b), Big(0)).times(-1),
+                ]);
+
+            // Get the credit transfers
+            Object.values(simpleMatrix.matrix).forEach(payments => Object.entries(payments)
+                .forEach((x) => {
+                    credits.push([simpleMatrix.currency, ...x]);
+                }));
+
+            // An Array containing credits and debits, this will make processing of funds easier
+            simpleFundsTransfer = [...debits, ...credits];
+        }
+
+        simpleFundsTransfer = simpleFundsTransfer.length === 0 ? ''
+            : JSON.stringify(simpleFundsTransfer);
+
+        verbose('simpleFundsTransfer', simpleFundsTransfer);
         verbose('opSettlementsEp', config.opSettlementsEp);
         const sharedLib = new Model({ endpoint: config.opSettlementsEp });
-        await sharedLib.postSettlementFile(settlement.id, matrix);
+        await sharedLib.postSettlementFile(settlement.id, matrix,
+            simpleFundsTransfer);
         completeStep();
         verbose('matrix', matrix);
 
