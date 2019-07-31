@@ -21,26 +21,31 @@ defaults_build_docker_test: &defaults_build_docker_test
   command: |
     echo "Building Docker image: test"
     docker build --pull --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:test .
+    docker build --pull -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME-init:test -f ./Dockerfile.dbinit .
 defaults_build_docker_build: &defaults_build_docker_build
   name: Build Docker $CIRCLE_TAG image
   command: |
     echo "Building Docker image: $CIRCLE_TAG"
     docker build --pull --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG .
+    docker build --pull -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME-init:$CIRCLE_TAG -f ./Dockerfile.dbinit .
 defaults_build_docker_build_release: &defaults_build_docker_build_release
   name: Build Docker $RELEASE_TAG image
   command: |
     echo "Building Docker image: $RELEASE_TAG"
     docker build --pull --build-arg SSH_KEY="$(echo $CASA_LIB_DEPLOY_KEY_B64_ENC | base64 -d)" -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG .
+    docker build --pull -t $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME-init:$RELEASE_TAG -f ./Dockerfile.dbinit .
 defaults_build_docker_publish: &defaults_build_docker_publish
   name: Publish Docker image $CIRCLE_TAG & Latest tag to Docker Hub
   command: |
     echo "Publishing $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG"
     docker push $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$CIRCLE_TAG
+    docker push $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME-init:$CIRCLE_TAG
 defaults_build_docker_publish_release: &defaults_build_docker_publish_release
   name: Publish Docker image $RELEASE_TAG tag to Docker Hub
   command: |
     echo "Publishing $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG"
     docker push $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME:$RELEASE_TAG
+    docker push $DOCKER_ORG/$CIRCLE_PROJECT_REPONAME-init:$RELEASE_TAG
 defaults_deploy_configure_helm: &defaults_deploy_configure_helm
   name: Configure Helm
   command: |
