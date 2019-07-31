@@ -17,14 +17,14 @@ init:
     tag: 10.2.1
     pullPolicy: Always
 
-db: 
+db:
   protocol: 'mysql'
   host: '$release_name-centralledger-mysql'
   port: '3306'
   user: 'central_ledger'
   password: 'oyMxgZChuu'
   schema: 'central_ledger'
-  
+
 service:
   type: ClusterIP
   port: 5000
