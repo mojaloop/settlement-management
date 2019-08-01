@@ -58,19 +58,19 @@ jobs:
       - checkout 
       - run:
           name: create-npmrc
-          command: cd src && echo $AZURE_NPM_REGISTRY_NPMRC_B64 | base64 -d > .npmrc
+          command: echo $AZURE_NPM_REGISTRY_NPMRC_B64 | base64 -d > .npmrc
       - run:
           name: install-npm-dependencies
-          command: cd src && yarn install --frozen-lockfile
+          command: yarn install --frozen-lockfile
       - run:
           name: check-yarn-lock
-          command: cd src && yarn check --offline --integrity
+          command: yarn check --offline --integrity
       - run:
           name: lint
-          command: cd src && yarn lint
+          command: yarn lint
       - run:
           name: test
-          command: cd src && yarn test
+          command: yarn test
   build_docker:
     machine: true
     # <<: *default_env
