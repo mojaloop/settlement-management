@@ -1,4 +1,4 @@
 node_modules
+.npmrc
 .env
-gh_casa_lib_deploy_key
 .idea/

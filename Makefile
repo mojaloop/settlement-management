@@ -10,8 +10,7 @@ NAME:=casa-settlement-management
 TAG:=${REPO}/${NAME}:${VER}
 REPO_ROOT:=$(shell git rev-parse --show-toplevel)
 DOCKER_BUILD_OPTS:=--pull=true
-KEY_PATH:=./gh_casa_lib_deploy_key
-SSH_KEY:=`cat ${KEY_PATH}`
+NPMRC_B64:=$(shell base64 -w 0 < ./.npmrc)
 LISTEN_PORT=3002
 
 ## NORMAL BUILDS
@@ -21,7 +20,7 @@ LISTEN_PORT=3002
 all: build
 
 build:
-	docker build -t ${TAG} ${DOCKER_BUILD_OPTS} --build-arg SSH_KEY="${SSH_KEY}" .
+	docker build -t ${TAG} ${DOCKER_BUILD_OPTS} --build-arg NPMRC_B64="${NPMRC_B64}" .
 
 run: build
 	docker run --env-file=.env -p ${LISTEN_PORT}:3002 ${TAG}
@@ -34,7 +33,7 @@ push: build
 # Create a build from the current repo HEAD, without modifications or untracked files
 
 build_clean: create_clean_temp_repo
-	docker build -t ${REPO}/${NAME}:${REV} ${DOCKER_BUILD_OPTS} --build-arg SSH_KEY="${SSH_KEY}" ${CLEAN_BUILD_DIR}
+	docker build -t ${REPO}/${NAME}:${REV} ${DOCKER_BUILD_OPTS} --build-arg NPMRC_B64="${NPMRC_B64}" ${CLEAN_BUILD_DIR}
 
 run_clean: build_clean
 	docker run --env-file=.env -p ${LISTEN_PORT}:3002 ${TAG}
@@ -53,17 +52,5 @@ create_clean_temp_repo:
 	cp -a ${REPO_ROOT}/. ${CLEAN_BUILD_DIR}
 	git -C ${CLEAN_BUILD_DIR} clean -xdff
 	git -C ${CLEAN_BUILD_DIR} reset --hard
-	cp ./gh_casa_lib_deploy_key ${CLEAN_BUILD_DIR}
-
-# An SSH key is required for building. Specifically, one with access to the Casa Github
-# casablanca-lib repo. The key is used for `npm install` during the docker container build. We use
-# a multi-stage build to avoid the key leaking into the published container. See the Dockerfile for
-# more details.
-# Invoke make as follows:
-# make KEY_PATH=~/.ssh/id_rsa
-check-env:
-ifndef KEY_PATH
-    $(error KEY_PATH is undefined. See Makefile for details.)
-endif
 
 .PHONY: build build_clean

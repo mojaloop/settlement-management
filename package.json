@@ -17,7 +17,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "big.js": "^5.2.2",
-    "casablanca-lib": "git+ssh://git@github.com:casablanca-project/casablanca-lib#12cb2e48219422f9e17cbc58f12c3c605e9e8856",
+    "casablanca-lib": "~0.0.1",
     "dotenv": "^8.0.0",
     "express": "^4.16.4",
     "mysql2": "^1.6.5",

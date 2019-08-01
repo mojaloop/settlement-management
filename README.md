@@ -47,6 +47,6 @@ operator-settlement, central-settlement or centralledger-service). You can also 
 
 Now install and run:
 ```bash
-npm install
+yarn install
 node index.js
 ```

@@ -1,29 +1,29 @@
 FROM node:8.11.3-alpine AS builder
 
-RUN apk update && apk add openssh-client git
+RUN apk update && apk add git
 
 WORKDIR /src
 
-# TODO: use a GH read-only repo token for the build
-
-# An SSH key is required for building. Specifically, one with access to the Casa Github
-# casablanca-lib repo. The key is used for `npm install` during the docker container build. We use
-# a multi-stage build to avoid the key leaking into the published container.
+# 'AZURE_NPM_REGISTRY_NPMRC_B64' environment variable is available in the CircleCI environment.
+# It contains the .npmrc configuration and credentials (base64 encoded) required to connect and publish to private 
+# Azure Devops Services NPM repository. So in essence, we shift from using the public npm registry
+# to a self-hosted npm registry.
+#
+# We need to grab content of this variable, decode it and write it to an .npmrc file.
+# The .npmrc file is used for `npm install` or `yarn install` during the docker container build. We use
+# a multi-stage build to avoid the .nmprc file leaking into the published container.
+#
 # Invoke docker build as follows:
-# docker build -t ${TAG} -f Dockerfile --build-arg SSH_KEY="$(cat ~/.ssh/id_rsa)" .
-ARG SSH_KEY
-RUN mkdir -p /root/.ssh && \
-    chmod 0700 /root/.ssh && \
-    ssh-keyscan github.com > /root/.ssh/known_hosts && \
-    echo "${SSH_KEY}" > /root/.ssh/id_rsa && \
-    chmod 600 /root/.ssh/id_rsa
-COPY ./package.json ./package-lock.json /src/
-# Delete the ssh key after the build; this will eliminate the possibility of copying it into the
-# final container.
-RUN eval `ssh-agent -s` && \
-    ssh-add $HOME/.ssh/id_rsa && \
-    npm install --production && \
-    rm -rf /root/.ssh
+#   docker build -t ${TAG} -f Dockerfile --build-arg NPMRC_B64="$AZURE_NPM_REGISTRY_NPMRC_B64" .
+ARG NPMRC_B64
+
+RUN echo "${NPMRC_B64}" | base64 -d > /src/.npmrc
+
+COPY ./package.json ./yarn.lock /src/
+
+# Delete the .npmrc file after the build; this will eliminate the possibility of copying it into the final container.
+RUN yarn install --frozen-lockfile && \
+    rm -f /src/.npmrc
 
 FROM node:8.11.3-alpine
 
