@@ -66,6 +66,9 @@ jobs:
           name: check-yarn-lock
           command: yarn check --offline --integrity
       - run:
+          name: audit-dependencies
+          command: yarn audit
+      - run:
           name: lint
           command: yarn lint
       - run:
