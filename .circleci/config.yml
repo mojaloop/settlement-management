@@ -67,7 +67,7 @@ jobs:
           command: yarn check --offline --integrity
       - run:
           name: audit-dependencies
-          command: cd src && yarn audit
+          command: yarn audit
       - run:
           name: lint
           command: yarn lint
