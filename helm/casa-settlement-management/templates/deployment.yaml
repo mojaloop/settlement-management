@@ -19,6 +19,7 @@ spec:
         release: {{ .Release.Name }}
     spec:
       initContainers:
+      - name: init
         envFrom:
         - configMapRef:
             name: {{ template "casa-settlement-management.fullname" . }}
