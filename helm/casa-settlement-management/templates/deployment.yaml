@@ -21,8 +21,8 @@ spec:
       initContainers:
         - name: init
           envFrom:
-          - configMapRef:
-              name: {{ template "casa-settlement-management.fullname" . }}
+            - secretRef:
+                name: {{ template "casa-settlement-management.fullname" . }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
