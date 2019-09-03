@@ -18,12 +18,10 @@ spec:
         app: {{ template "casa-settlement-management.name" . }}
         release: {{ .Release.Name }}
     spec:
-      {{- if .Values.init.enabled }}
       initContainers:
         envFrom:
         - configMapRef:
             name: {{ template "casa-settlement-management.fullname" . }}
-      {{- end }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

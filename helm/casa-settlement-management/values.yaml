@@ -6,7 +6,6 @@ image:
     name: dock-casa-secret
 
 init:
-  enabled: true
   image:
     name: init
     repository: casablanca-casa-docker-release.jfrog.io/casa-settlement-management-init
