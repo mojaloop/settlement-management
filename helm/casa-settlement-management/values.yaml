@@ -1,20 +1,14 @@
-# Default values for casa-close-settlement-window.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
 image:
   repository: casablanca-casa-docker-release.jfrog.io/casa-settlement-management
-  tag: v10.4.1
+  tag: v10.7.1
   pullPolicy: Always
   imagePullSecrets:
     name: dock-casa-secret
 
 init:
-  enabled: true
   image:
-    name: create-casa-settlement-management-tables
     repository: casablanca-casa-docker-release.jfrog.io/casa-settlement-management-init
-    tag: 10.2.1
+    tag: 10.7.1
     pullPolicy: Always
 
 db:
