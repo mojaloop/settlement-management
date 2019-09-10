@@ -158,7 +158,7 @@ jobs:
             git config --global user.email "kamuela.franco@modusbox.com"
             git commit -m "Automatic chart updated by $CIRCLE_PROJECT_REPONAME $CIRCLE_TAG"
             # Tag cm-dev
-            git tag -a "$CIRCLE_SHA1-snapshot" -m "Tagged in CI by $CIRCLE_PROJECT_REPONAME tag: $CIRCLE_TAG"
+            git tag -a "$CIRCLE_SHA1-$CIRCLE_PROJECT_REPONAME-snapshot" -m "Tagged in CI by $CIRCLE_PROJECT_REPONAME tag: $CIRCLE_TAG"
             # Push changes
             git push --follow-tags
 
