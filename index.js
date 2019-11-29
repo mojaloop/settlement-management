@@ -1,8 +1,8 @@
-const casalib = require('casablanca-lib');
+const financePortalLib = require('@mojaloop/finance-portal-lib');
 const Big = require('big.js');
 
-const { util: settlementLib, api: Model } = casalib.settlement;
-const { api: adminApi } = casalib.admin;
+const { util: settlementLib, api: Model } = financePortalLib.settlement;
+const { api: adminApi } = financePortalLib.admin;
 const util = require('util');
 const express = require('express');
 const lib = require('./lib');
