@@ -7,7 +7,7 @@ WORKDIR /src
 COPY ./init.sql /src/
 COPY ./package.json ./package-lock.json /src/
 
-RUN npm install
+RUN npm ci
 
 FROM node:8.11.3-alpine
 
