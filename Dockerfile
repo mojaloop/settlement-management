@@ -1,4 +1,4 @@
-FROM node:8.11.3-alpine AS builder
+FROM node:10.15.3-alpine AS builder
 
 RUN apk update && apk add git bash mysql-client
 
