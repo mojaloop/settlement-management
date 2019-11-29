@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/mojaloop/settlement-management.svg?style=svg)](https://circleci.com/gh/mojaloop/settlement-management)
 
 # Casa Settlement Management
 This repo contains functionality to close a settlement window and generate a payment file for
