@@ -1,23 +1,23 @@
 {
-  "name": "close-settlement-window",
-  "version": "1.0.0",
+  "name": "settlement-management",
   "description": "One-shot script to close the current open settlement window",
+  "version": "1.0.0",
+  "author": "Matt Kingston, Aarón Reynoza, ModusBox Inc.",
+  "license": "Apache-2.0",
   "main": "index.js",
   "scripts": {
-    "build": "docker build -t casa-close-settlement-window:latest ./",
+    "build": "docker build -t settlement-management:latest ./",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest test/ --passWithNoTests"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/casablanca-project/casablanca-scheduled-tasks.git"
+    "url": "git://github.com/mojaloop/settlement-management.git"
   },
-  "author": "Matt Kingston, Aarón Reynoza, ModusBox Inc.",
-  "license": "UNLICENSED",
   "dependencies": {
     "big.js": "^5.2.2",
-    "casablanca-lib": "~0.0.1",
+    "@mojaloop/finance-portal-lib": "~0.0.1-snapshot",
     "dotenv": "^8.0.0",
     "express": "^4.16.4",
     "mysql2": "^1.6.5",
