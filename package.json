@@ -1,7 +1,7 @@
 {
   "name": "settlement-management",
   "description": "One-shot script to close the current open settlement window",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "Matt Kingston, Aarón Reynoza, ModusBox Inc.",
   "license": "Apache-2.0",
   "main": "index.js",
