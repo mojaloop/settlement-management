@@ -203,19 +203,19 @@ app.post('/close-window', async (req, res) => {
         // TODO: when we automate the real-money transaction, we should store this matrix in the db
         // and explicitly store the "send date" or some sort of Citi transaction ID
         // Create the payment matrix, store it in the db
-        const accounts = await db.getDfspsAccounts();
-        const dfspAccounts = accounts.reduce((acc, current) => (
-            {
-                ...acc,
-                [current.participantId]: {
-                    name: current.name,
-                    country: current.accountCountry,
-                    accountId: current.accountNumber,
-                },
-            }), {}); // Probably not a good indentation. Too much LISP can change you
-        const matrix = (settlement.participants.length > 0)
-            ? settlementLib.generatePaymentFile(settlementWindowId, settlement, dfspAccounts)
-            : 'No participants in this settlement. No file generated.';
+        // const accounts = await db.getDfspsAccounts();
+        // const dfspAccounts = accounts.reduce((acc, current) => (
+        //     {
+        //         ...acc,
+        //         [current.participantId]: {
+        //             name: current.name,
+        //             country: current.accountCountry,
+        //             accountId: current.accountNumber,
+        //         },
+        //     }), {}); // Probably not a good indentation. Too much LISP can change you
+        // const matrix = (settlement.participants.length > 0)
+        //     ? settlementLib.generatePaymentFile(settlementWindowId, settlement, dfspAccounts)
+        //     : 'No participants in this settlement. No file generated.';
 
         // Get the simplified version of the payment matrix
         const simpleMatrix = (settlement.participants.length > 0)
