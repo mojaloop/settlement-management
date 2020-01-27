@@ -200,22 +200,6 @@ app.post('/close-window', async (req, res) => {
         completeStep();
         verbose('result', result);
 
-        // TODO: when we automate the real-money transaction, we should store this matrix in the db
-        // and explicitly store the "send date" or some sort of Citi transaction ID
-        // Create the payment matrix, store it in the db
-        const accounts = await db.getDfspsAccounts();
-        const dfspAccounts = accounts.reduce((acc, current) => (
-            {
-                ...acc,
-                [current.participantId]: {
-                    name: current.name,
-                    country: current.accountCountry,
-                    accountId: current.accountNumber,
-                },
-            }), {}); // Probably not a good indentation. Too much LISP can change you
-        const matrix = (settlement.participants.length > 0)
-            ? settlementLib.generatePaymentFile(settlementWindowId, settlement, dfspAccounts)
-            : 'No participants in this settlement. No file generated.';
 
         // Get the simplified version of the payment matrix
         const simpleMatrix = (settlement.participants.length > 0)
@@ -247,10 +231,9 @@ app.post('/close-window', async (req, res) => {
         verbose('simpleFundsTransfer', simpleFundsTransfer);
         verbose('opSettlementsEp', config.opSettlementsEp);
         const sharedLib = new Model({ endpoint: config.opSettlementsEp });
-        await sharedLib.postSettlementFile(settlement.id, matrix,
+        await sharedLib.postSettlementFile(settlement.id, '',
             simpleFundsTransfer);
         completeStep();
-        verbose('matrix', matrix);
 
         // Reserve funds out
         payers.forEach((p) => {
@@ -264,49 +247,6 @@ app.post('/close-window', async (req, res) => {
                 p.accounts[0].netSettlementAmount.amount, 'automatically scheduled settlement');
         });
 
-        // 'Set settlement to SETTLING for payers',
-        // result = await lib.putSettlement({
-        //    logger: verbose,
-        //    settlementId: settlement.id,
-        //    endpoint: config.settlementsEp,
-        //    participants: newParticipantsAccountState(
-        //      payers,
-        //      'Payee: SETTLED,
-        //      settlement: SETTLED',
-        //      'SETTLED',
-        //    )
-        // });
-        // completeStep();
-        // verbose('result', result);
-
-        // 'Set settlement to SETTLING for payees',
-        // result = await lib.putSettlement({
-        //    logger: verbose,
-        //    settlementId: settlement.id,
-        //    endpoint: config.settlementsEp,
-        //    participants: newParticipantsAccountState(
-        //      payees,
-        //      'Payee: SETTLED,
-        //      settlement: SETTLED',
-        //      'SETTLED',
-        //    )
-        // });
-        // completeStep();
-        // verbose('result', result);
-
-        // 'Commit transfers- set transfers to COMMITTED',
-        // result = await lib.putSettlement({
-        //    logger: verbose,
-        //    settlementId: settlement.id,
-        //    endpoint: config.settlementsEp,
-        //    participants: newParticipantsAccountState(
-        //      settlement.participants,
-        //      'Transfers committed for payer & payee',
-        //      'COMMITTED',
-        //    )
-        // });
-        // completeStep();
-        // verbose('result', result);
 
         try {
             // send the payment matrix to the bank
