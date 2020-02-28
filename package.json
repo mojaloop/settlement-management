@@ -9,7 +9,9 @@
     "build": "docker build -t settlement-management:latest ./",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "jest test/ --passWithNoTests"
+    "test": "jest test/ --passWithNoTests",
+    "audit:resolve": "SHELL=sh resolve-audit",
+    "audit:check": "SHELL=sh check-audit"
   },
   "repository": {
     "type": "git",
@@ -28,6 +30,7 @@
     "eslint": "^5.3.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.17.3",
-    "jest": "^24.8.0"
+    "jest": "^24.8.0",
+    "npm-audit-resolver": "2.2.0"
   }
 }
