@@ -12,10 +12,10 @@ COPY ./config.js ./db.js ./index.js ./lib.js /opt/settlement-management/
 RUN npm install
 
 ## Run-time Image
-FROM node:8.11.3-alpine
-WORKDIR /opt/operator-settlement
+FROM node:10.15.3-alpine
+WORKDIR /opt/settlement-management
 
-COPY --from=builder /opt/operator-settlement .
+COPY --from=builder /opt/settlement-management .
 
 RUN npm prune --production
 
