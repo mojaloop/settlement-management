@@ -1,9 +1,9 @@
 {
   "decisions": {
-    "1500|npm-audit-resolver>audit-resolve-core>yargs-parser": {
+    "1556|@mojaloop/finance-portal-lib>node-fetch": {
       "decision": "ignore",
-      "madeAt": 1588758016739,
-      "expiresAt": 1591350009852
+      "madeAt": 1607515983564,
+      "expiresAt": 1610107967527
     }
   },
   "rules": {},

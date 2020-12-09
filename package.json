@@ -1,7 +1,7 @@
 {
   "name": "settlement-management",
   "description": "One-shot script to close the current open settlement window",
-  "version": "8.8.2",
+  "version": "11.0.0",
   "author": "ModusBox",
   "contributors": [
     "Matt Kingston <matt.kingston@modusbox.com>",
@@ -14,20 +14,20 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest test/ --passWithNoTests",
-    "audit:resolve": "SHELL=sh resolve-audit",
-    "audit:check": "SHELL=sh check-audit"
+    "audit:resolve": "SHELL=sh resolve-audit --production",
+    "audit:check": "SHELL=sh check-audit --production"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/mojaloop/settlement-management.git"
   },
   "dependencies": {
-    "big.js": "^5.2.2",
     "@mojaloop/finance-portal-lib": "~0.0.1-snapshot",
+    "big.js": "^5.2.2",
     "dotenv": "^8.0.0",
     "express": "^4.16.4",
     "mysql2": "^1.6.5",
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
