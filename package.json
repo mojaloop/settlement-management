@@ -14,27 +14,32 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "jest test/ --passWithNoTests",
-    "audit:resolve": "SHELL=sh resolve-audit --production",
-    "audit:check": "SHELL=sh check-audit --production"
+    "audit:resolve": "SHELL=sh resolve-audit",
+    "audit:check": "SHELL=sh check-audit",
+    "license:list": "license-checker . --excludePackages `cat .licenseignore | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'` --production --csv",
+    "license:check": "npm run license:list -- --failOn `cat .licensebanned | grep '^[^#;]' | awk 'BEGIN { ORS=\"\" } { print p$0\";\"; } END { print \n }'`",
+    "dep:check": "npx ncu -e 2",
+    "dep:update": "npx ncu -u"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/mojaloop/settlement-management.git"
   },
   "dependencies": {
-    "@mojaloop/finance-portal-lib": "~0.0.1-snapshot",
-    "big.js": "^5.2.2",
-    "dotenv": "^8.0.0",
-    "express": "^4.16.4",
-    "mysql2": "^1.6.5",
-    "node-fetch": "^2.6.1",
-    "uuid": "^3.3.2"
+    "@mojaloop/finance-portal-lib": "0.1.1",
+    "big.js": "6.0.3",
+    "dotenv": "8.2.0",
+    "express": "4.17.1",
+    "mysql2": "2.2.5",
+    "node-fetch": "2.6.1",
+    "uuid": "8.3.2"
   },
   "devDependencies": {
-    "eslint": "^5.3.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.17.3",
-    "jest": "^24.8.0",
-    "npm-audit-resolver": "2.2.0"
+    "eslint": "7.19.0",
+    "eslint-config-airbnb-base": "14.2.1",
+    "eslint-plugin-import": "2.22.1",
+    "jest": "26.6.3",
+    "npm-audit-resolver": "2.2.1",
+    "npm-check-updates": "11.1.1"
   }
 }

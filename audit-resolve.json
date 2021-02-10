@@ -1,9 +1,8 @@
 {
   "decisions": {
     "1556|@mojaloop/finance-portal-lib>node-fetch": {
-      "decision": "ignore",
-      "madeAt": 1607515983564,
-      "expiresAt": 1610107967527
+      "decision": "postpone",
+      "madeAt": 1612949360478
     }
   },
   "rules": {},

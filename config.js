@@ -1,4 +1,3 @@
-// (C)2018 ModusBox Inc.
 
 const dotenv = require('dotenv');
 
