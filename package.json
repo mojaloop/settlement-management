@@ -22,7 +22,7 @@
     "url": "git://github.com/mojaloop/settlement-management.git"
   },
   "dependencies": {
-    "@mojaloop/finance-portal-lib": "~0.1.0",
+    "@mojaloop/finance-portal-lib": "0.1.1",
     "big.js": "6.0.3",
     "dotenv": "8.2.0",
     "express": "4.17.1",
