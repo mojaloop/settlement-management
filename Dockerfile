@@ -16,6 +16,8 @@ RUN npm install
 FROM node:12.16.0-alpine
 WORKDIR /opt/settlement-management
 
+RUN apk update && apk add bash mysql-client
+
 # Create a non-root user: ml-user
 RUN adduser -D ml-user 
 USER ml-user
