@@ -1,3 +1,9 @@
+[DEPRECATED] settlement-management
+Deprecation Notice
+Theis repo was deprecated as of August 2025. It is no longer maintained, and is no longer referenced by any releases of Mojaloop.
+
+For a list of active Mojaloop repos, please refer to Repo Details section of the Mojaloop documentation.
+
 [![CircleCI](https://circleci.com/gh/mojaloop/settlement-management.svg?style=svg)](https://circleci.com/gh/mojaloop/settlement-management)
 
 # Casa Settlement Management
