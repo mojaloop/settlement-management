@@ -1,4 +1,4 @@
-[DEPRECATED] settlement-management
+# [DEPRECATED] settlement-management
 Deprecation Notice
 Theis repo was deprecated as of August 2025. It is no longer maintained, and is no longer referenced by any releases of Mojaloop.
 
